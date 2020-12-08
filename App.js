@@ -6,36 +6,42 @@ import {
   View,
   Dimensions,
   TouchableOpacity,
-  AsyncStorage
+  AsyncStorage,
 } from "react-native";
 import WinOverlay from "./win_overlay";
 import { getGameStatus } from "./game";
 import ScaleIn from "./scalein";
+import BlackPawn from "./BlackPawn";
+import WhitePawn from "./WhitePawn";
 
-const squares = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+const squares = [...Array(25).keys()];
 
 export default class App extends Component {
   state = {
     user: "X",
-    moves: {}
+    moves: {},
   };
+
   async componentDidMount() {
     const values = await AsyncStorage.multiGet(["XWins", "OWins"]);
     this.setState({
       [values[0][0]]: parseInt(values[0][1], 10) || 0,
-      [values[1][0]]: parseInt(values[1][1], 10) || 0
+      [values[1][0]]: parseInt(values[1][1], 10) || 0,
     });
   }
 
   updateStorage = (XWins, OWins) => {
-    AsyncStorage.multiSet([["XWins", `${XWins}`], ["OWins", `${OWins}`]]);
+    AsyncStorage.multiSet([
+      ["XWins", `${XWins}`],
+      ["OWins", `${OWins}`],
+    ]);
   };
 
   handleRestart = () => {
     this.setState({
       moves: {},
       user: "X",
-      gameStatus: undefined
+      gameStatus: undefined,
     });
   };
 
@@ -43,13 +49,13 @@ export default class App extends Component {
     this.updateStorage(0, 0);
     this.setState({
       XWins: 0,
-      OWins: 0
+      OWins: 0,
     });
   };
 
-  handlePlaceMove = index => {
+  handlePlaceMove = (index) => {
     this.setState(
-      state => {
+      (state) => {
         const moves = { ...state.moves, [index]: state.user };
         const gameStatus = getGameStatus(moves);
 
@@ -58,7 +64,7 @@ export default class App extends Component {
           user: state.user === "X" ? "O" : "X",
           gameStatus,
           XWins: gameStatus === "X_WIN" ? (state.XWins += 1) : state.XWins,
-          OWins: gameStatus == "O_WIN" ? (state.OWins += 1) : state.OWins
+          OWins: gameStatus == "O_WIN" ? (state.OWins += 1) : state.OWins,
         };
       },
       () => {
@@ -68,11 +74,12 @@ export default class App extends Component {
       }
     );
   };
+
   render() {
     const { moves, user, gameStatus } = this.state;
     const { width } = Dimensions.get("window");
 
-    const squareSize = width / 3 - 4;
+    const squareSize = width / 5 - 4;
 
     return (
       <SafeAreaView style={styles.container}>
@@ -81,16 +88,24 @@ export default class App extends Component {
         </View>
         <View style={styles.content}>
           <View style={styles.board}>
-            {squares.map(i => {
+            {squares.map((i) => {
               return (
-                <View key={i} style={[styles.square, { width: squareSize, height: squareSize }]}>
+                <View
+                  key={i}
+                  style={[
+                    styles.square,
+                    { width: squareSize, height: squareSize },
+                  ]}
+                >
                   <TouchableOpacity
                     style={styles.touchSquare}
-                    onPress={!moves[i] ? () => this.handlePlaceMove(i) : undefined}
+                    onPress={
+                      !moves[i] ? () => this.handlePlaceMove(i) : undefined
+                    }
                   >
                     {!!moves[i] && (
                       <ScaleIn>
-                        <Text style={styles.value}>{moves[i]}</Text>
+                        {moves[i] === "X" ? <BlackPawn /> : <WhitePawn />}
                       </ScaleIn>
                     )}
                   </TouchableOpacity>
@@ -101,12 +116,17 @@ export default class App extends Component {
         </View>
         <View style={styles.footer}>
           <Text style={styles.winValue}>{this.state.XWins} X Wins</Text>
-          <TouchableOpacity style={styles.resetButton} onPress={this.handleReset}>
+          <TouchableOpacity
+            style={styles.resetButton}
+            onPress={this.handleReset}
+          >
             <Text style={styles.resetButtonText}>Reset</Text>
           </TouchableOpacity>
           <Text style={styles.winValue}>{this.state.OWins} O Wins</Text>
         </View>
-        {!!gameStatus && <WinOverlay value={gameStatus} onRestart={this.handleRestart} />}
+        {!!gameStatus && (
+          <WinOverlay value={gameStatus} onRestart={this.handleRestart} />
+        )}
       </SafeAreaView>
     );
   }
@@ -114,49 +134,46 @@ export default class App extends Component {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1
+    flex: 1,
   },
   header: {
     alignItems: "center",
-    justifyContent: "center"
+    justifyContent: "center",
   },
   content: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "center"
+    justifyContent: "center",
   },
   footer: {
     paddingHorizontal: 20,
     alignItems: "center",
     flexDirection: "row",
-    justifyContent: "space-between"
+    justifyContent: "space-between",
   },
   turn: {
-    fontSize: 24
+    fontSize: 24,
   },
   board: {
     flexDirection: "row",
     flexWrap: "wrap",
     alignItems: "center",
-    justifyContent: "center"
+    justifyContent: "center",
   },
   square: {
     borderWidth: 1,
     borderColor: "#000",
     alignItems: "center",
-    justifyContent: "center"
+    justifyContent: "center",
   },
   touchSquare: {
     alignItems: "center",
     justifyContent: "center",
     width: "100%",
-    height: "100%"
-  },
-  value: {
-    fontSize: 100
+    height: "100%",
   },
   winValue: {
-    fontSize: 18
+    fontSize: 18,
   },
   resetButton: {
     borderRadius: 8,
@@ -164,10 +181,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 7,
     alignItems: "center",
-    justifyContent: "center"
+    justifyContent: "center",
   },
   resetButtonText: {
     color: "#FFF",
-    fontSize: 20
-  }
+    fontSize: 20,
+  },
 });
